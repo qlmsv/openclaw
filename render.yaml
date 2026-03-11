@@ -3,7 +3,7 @@ services:
     name: openclaw
     runtime: docker
     plan: standard
-    dockerCommand: node openclaw.mjs config set gateway.controlUi.dangerouslyAllowHostHeaderOriginFallback true --strict-json && node openclaw.mjs gateway --allow-unconfigured --bind lan --port 8080
+    dockerCommand: node openclaw.mjs config set gateway.mode local --strict-json && node openclaw.mjs config set gateway.controlUi.dangerouslyAllowHostHeaderOriginFallback true --strict-json && node openclaw.mjs gateway --bind lan --port 8080
     healthCheckPath: /healthz
     envVars:
       - key: PORT
