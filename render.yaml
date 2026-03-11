@@ -3,4 +3,12 @@ services:
     name: openclaw
     runtime: docker
     plan: standard
-    healthCheckPath: /health
+    dockerCommand: /bin/sh -lc 'exec node openclaw.mjs gateway --allow-unconfigured --bind lan --port "${PORT:-10000}" --token "${OPENCLAW_GATEWAY_TOKEN}"'
+    healthCheckPath: /healthz
+    envVars:
+      - key: PORT
+        value: "10000"
+      - key: OPENCLAW_GATEWAY_PORT
+        value: "10000"
+      - key: OPENCLAW_GATEWAY_TOKEN
+        generateValue: true
