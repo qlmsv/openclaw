@@ -10,9 +10,10 @@ export OPENCLAW_GATEWAY_BIND="$gateway_bind"
 
 node openclaw.mjs config set gateway.mode local >/dev/null
 node openclaw.mjs config set gateway.bind "$gateway_bind" >/dev/null
+node openclaw.mjs config set gateway.port "$gateway_port" --strict-json >/dev/null
 
 if [ "$allow_host_header_fallback" = "true" ]; then
   node openclaw.mjs config set gateway.controlUi.dangerouslyAllowHostHeaderOriginFallback true --strict-json >/dev/null
 fi
 
-exec node openclaw.mjs gateway --bind "$gateway_bind" --port "$gateway_port"
+exec node openclaw.mjs gateway run
