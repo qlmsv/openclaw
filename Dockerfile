@@ -146,6 +146,12 @@ RUN install -d -m 0755 "$COREPACK_HOME" && \
     corepack prepare "$(node -p "require('./package.json').packageManager")" --activate && \
     chmod -R a+rX "$COREPACK_HOME"
 
+# Ship common skill runtimes in the image so Linux deployments pass skill
+# eligibility checks without requiring mutable global installs at runtime.
+RUN curl -LsSf https://astral.sh/uv/install.sh | env UV_UNMANAGED_INSTALL=/usr/local/bin sh && \
+    npm install -g @openai/codex && \
+    npm cache clean --force
+
 # Install additional system packages needed by your skills or extensions.
 # Example: docker build --build-arg OPENCLAW_DOCKER_APT_PACKAGES="python3 wget" .
 ARG OPENCLAW_DOCKER_APT_PACKAGES=""
