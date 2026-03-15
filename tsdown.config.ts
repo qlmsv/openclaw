@@ -87,21 +87,33 @@ const pluginSdkEntrypoints = [
   "keyed-async-queue",
 ] as const;
 
+const pluginSdkEntryGroups = [
+  pluginSdkEntrypoints.slice(0, 12),
+  pluginSdkEntrypoints.slice(12, 24),
+  pluginSdkEntrypoints.slice(24, 36),
+  pluginSdkEntrypoints.slice(36),
+] as const;
+
 export default defineConfig([
   nodeBuildConfig({
+    name: "core-index",
     entry: "src/index.ts",
   }),
   nodeBuildConfig({
+    name: "core-entry",
     entry: "src/entry.ts",
   }),
   nodeBuildConfig({
+    name: "core-daemon-cli",
     // Ensure this module is bundled as an entry so legacy CLI shims can resolve its exports.
     entry: "src/cli/daemon-cli.ts",
   }),
   nodeBuildConfig({
+    name: "core-warning-filter",
     entry: "src/infra/warning-filter.ts",
   }),
   nodeBuildConfig({
+    name: "channels-runtime",
     // Keep sync lazy-runtime channel modules as concrete dist files.
     entry: {
       "channels/plugins/agent-tools/whatsapp-login":
@@ -116,16 +128,21 @@ export default defineConfig([
       "line/template-messages": "src/line/template-messages.ts",
     },
   }),
-  ...pluginSdkEntrypoints.map((entry) =>
-    nodeBuildConfig({
-      entry: `src/plugin-sdk/${entry}.ts`,
-      outDir: "dist/plugin-sdk",
-    }),
+  ...pluginSdkEntryGroups.flatMap((group, index) =>
+    group.map((entry) =>
+      nodeBuildConfig({
+        name: `plugin-sdk-${index + 1}`,
+        entry: `src/plugin-sdk/${entry}.ts`,
+        outDir: "dist/plugin-sdk",
+      }),
+    ),
   ),
   nodeBuildConfig({
+    name: "extension-api",
     entry: "src/extensionAPI.ts",
   }),
   nodeBuildConfig({
+    name: "hooks",
     entry: ["src/hooks/bundled/*/handler.ts", "src/hooks/llm-slug-generator.ts"],
   }),
 ]);
