@@ -39,21 +39,12 @@ RUN mkdir -p /out && \
 # ── Stage 2: Build ──────────────────────────────────────────────
 FROM ${OPENCLAW_NODE_BOOKWORM_IMAGE} AS build
 
-# Install Bun (required for build scripts). Retry the whole bootstrap flow to
-# tolerate transient 5xx failures from bun.sh/GitHub during CI image builds.
-RUN set -eux; \
-    for attempt in 1 2 3 4 5; do \
-      if curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL https://bun.sh/install | bash; then \
-        break; \
-      fi; \
-      if [ "$attempt" -eq 5 ]; then \
-        exit 1; \
-      fi; \
-      sleep $((attempt * 2)); \
-    done
-ENV PATH="/root/.bun/bin:${PATH}"
-
-RUN corepack enable
+# Docker builds in Render already run the production build entirely through
+# pnpm, so avoid bootstrapping Bun here. That extra network hop has been the
+# least reliable part of the CI image build and is not required for gateway
+# runtime images.
+ENV COREPACK_HOME=/usr/local/share/corepack
+RUN install -d -m 0755 "$COREPACK_HOME" && corepack enable
 
 WORKDIR /app
 
@@ -147,21 +138,12 @@ COPY --from=runtime-assets --chown=node:node /app/extensions ./extensions
 COPY --from=runtime-assets --chown=node:node /app/skills ./skills
 COPY --from=runtime-assets --chown=node:node /app/docs ./docs
 
-# Keep pnpm available in the runtime image for container-local workflows.
-# Use a shared Corepack home so the non-root `node` user does not need a
-# first-run network fetch when invoking pnpm.
+# Keep pnpm available in the runtime image for container-local workflows
+# without performing a second package-manager download in the runtime stage.
 ENV COREPACK_HOME=/usr/local/share/corepack
+COPY --from=runtime-assets /usr/local/share/corepack /usr/local/share/corepack
 RUN install -d -m 0755 "$COREPACK_HOME" && \
     corepack enable && \
-    for attempt in 1 2 3 4 5; do \
-      if corepack prepare "$(node -p "require('./package.json').packageManager")" --activate; then \
-        break; \
-      fi; \
-      if [ "$attempt" -eq 5 ]; then \
-        exit 1; \
-      fi; \
-      sleep $((attempt * 2)); \
-    done && \
     chmod -R a+rX "$COREPACK_HOME"
 
 # Ship common skill runtimes in the image so Linux deployments pass skill
