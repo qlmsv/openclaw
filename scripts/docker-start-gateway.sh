@@ -1,6 +1,11 @@
 #!/bin/sh
 set -eu
 
+# Render runtime can be tight on memory during startup. Give Node a bit more heap
+# to avoid early OOM while still staying under the container limit.
+: "${NODE_OPTIONS:=--max-old-space-size=1536}"
+export NODE_OPTIONS
+
 gateway_port="${PORT:-${OPENCLAW_GATEWAY_PORT:-18789}}"
 gateway_bind="${OPENCLAW_GATEWAY_BIND:-loopback}"
 allow_host_header_fallback="${OPENCLAW_GATEWAY_ALLOW_HOST_HEADER_ORIGIN_FALLBACK:-false}"
